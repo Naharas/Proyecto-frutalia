@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Frutalia - Pedido de Jugos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #ffecd2, #fcb69f);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #4e342e;
+    }
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+      background: #fff8e1;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #e65100;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    label {
+      font-weight: bold;
+      color: #6d4c41;
+    }
+    .form-control, .form-select {
+      border-radius: 8px;
+      border: 2px solid #ffe082;
+      background-color: #fffde7;
+    }
+    .btn-success {
+      background-color: #66bb6a;
+      border: none;
+      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 10px;
+      transition: background-color 0.3s ease;
+    }
+    .btn-success:hover {
+      background-color: #43a047;
+    }
+    .message {
+      display: none;
+      margin-top: 20px;
+      font-weight: bold;
+      color: #2e7d32;
+      background-color: #c8e6c9;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    #pedidos-table {
+      margin-top: 40px;
+    }
+    table {
+      background-color: #fff3e0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th {
+      background-color: #ffcc80;
+      color: #4e342e;
+    }
+    td {
+      background-color: #fff8e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🍊 Frutalia - Pedido de Jugos Naturales 🍋</h2>
+    <form id="pedidoForm">
+      <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre del cliente</label>
+        <input type="text" class="form-control" id="nombre" name="Nombre del cliente" required />
+      </div>
+      <div class="mb-3">
+        <label for="telefono" class="form-label">Teléfono</label>
+        <input type="tel" class="form-control" id="telefono" name="Teléfono" required />
+      </div>
+      <div class="mb-3">
+        <label for="sabor" class="form-label">Sabor del jugo</label>
+        <select class="form-select" id="sabor" name="Sabor del jugo" required>
+          <option value="">Selecciona una opción</option>
+          <option value="naranja">Naranja</option>
+          <option value="mango">Mango</option>
+          <option value="fresa">Fresa</option>
+          <option value="piña">Piña</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="tamano" class="form-label">Tamaño</label>
+        <select class="form-select" id="tamano" name="Tamaño" required>
+          <option value="">Selecciona un tamaño</option>
+          <option value="chico">Chico</option>
+          <option value="mediano">Mediano</option>
+          <option value="grande">Grande</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="comentarios" class="form-label">Comentarios adicionales</label>
+        <textarea class="form-control" id="comentarios" name="Comentarios adicionales"></textarea>
+      </div>
+      <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-success">Enviar Pedido</button>
+      </div>
+      <p class="message" id="mensajeExito">Tu pedido ha sido enviado con éxito, pasa a recogerlo en 10 minutos. ¡Frutalia agradece tu preferencia! 🌿</p>
+    </form>
+
+    <div id="pedidos-table">
+      <h4 class="mt-5 text-center">🌺 Pedidos Registrados</h4>
+      <div id="tablaPedidos"></div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("pedidoForm");
+    const mensaje = document.getElementById("mensajeExito");
+    const scriptURL =
+      "https://script.google.com/macros/s/AKfycbyAHbchXz33nowccrMLoMKsr-36HmzuC175sz6W3w0G0lMM-7K8rHQXSvSJOfOPSZGDRg/exec";
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const data = new FormData(form);
+      const obj = {};
+      data.forEach((value, key) => (obj[key] = value));
+
+      try {
+        await fetch(scriptURL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(obj),
+        });
+
+        mensaje.style.display = "block";
+        form.reset();
+      } catch (error) {
+        alert("Hubo un error al enviar el pedido");
+        console.error(error);
+      }
+    });
+
+    async function cargarPedidos() {
+      try {
+        const response = await fetch(scriptURL + "?verPedidos=true");
+        const data = await response.json();
+
+        let tabla = '<table class="table table-striped"><thead><tr>';
+        const headers = Object.keys(data[0]);
+        headers.forEach((header) => {
+          tabla += `<th>${header}</th>`;
+        });
+        tabla += "</tr></thead><tbody>";
+
+        data.forEach((row) => {
+          tabla += "<tr>";
+          headers.forEach((header) => {
+            tabla += `<td>${row[header]}</td>`;
+          });
+          tabla += "</tr>";
+        });
+
+        tabla += "</tbody></table>";
+        document.getElementById("tablaPedidos").innerHTML = tabla;
+      } catch (error) {
+        document.getElementById("tablaPedidos").innerHTML = "No se pudieron cargar los pedidos";
+      }
+    }
+
+    cargarPedidos();
+  </script>
+</body>
+</html>
